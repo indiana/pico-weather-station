@@ -28,26 +28,44 @@ def main():
     button = Pin(14, Pin.IN, Pin.PULL_DOWN)
     button.irq(trigger=machine.Pin.IRQ_RISING, handler=switch_mode)
 
+    temp_min = dht_sensor.temperature
+    temp_max = temp_min
+    hum_min = dht_sensor.humidity
+    hum_max = hum_min
+
     while True:
+        temp1 = internal_temp.read_u16() * conversion_factor
+        temp1 = 27 - (temp1 - 0.706) / 0.001721
+    
+        t = dht_sensor.temperature
+        if t!=0:
+            temp2 = t
+        if temp2 < temp_min:
+            temp_min = temp2
+        if temp2 > temp_max:
+            temp_max = temp2
+            
+        h = dht_sensor.humidity
+        if h!=0:
+            hum = h
+        if hum < hum_min:
+            hum_min = hum
+        if hum > hum_max:
+            hum_max = hum
+    
         if mode == 0:
-            temp1 = internal_temp.read_u16() * conversion_factor
-            temp1 = 27 - (temp1 - 0.706) / 0.001721
-        
-            temp2 = dht_sensor.temperature
-            hum = dht_sensor.humidity
-        
             display_data(lcd, temp1, temp2, hum)
         else:
-            display_info(lcd)
+            display_min_max(lcd, temp_min, temp_max, hum_min, hum_max)
         utime.sleep(1)
     
 def display_data(lcd, temperature1, temperature2, humidity):
     lcd.clear()
     lcd.putstr("T1=" + str(round(temperature1, 1))+"\nT2=" + str(round(temperature2, 1)) + " H=" + str(round(humidity, 1)))
 
-def display_info(lcd):
+def display_min_max(lcd, temp_min, temp_max, hum_min, hum_max):
     lcd.clear()
-    lcd.putstr("WEATHER\nSTATION :)")
+    lcd.putstr("T "+str(temp_min)+" - "+str(temp_max)+"\nH "+str(hum_min)+" - "+str(hum_max))
 
 def switch_mode(pin):
     global mode
