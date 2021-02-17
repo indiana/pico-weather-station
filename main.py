@@ -1,7 +1,12 @@
+# DHT22 libray is available at
+# https://github.com/danjperron/PicoDHT22
+# esp8266_i2c_lcd libray is available at
+# https://github.com/dhylands/python_lcd
+
 import utime
 from machine import I2C, Pin
 from lib.esp8266_i2c_lcd import I2cLcd
-from lib.dht import DHT11, InvalidChecksum
+from lib.DHT22 import DHT22
 
 mode = 0
 
@@ -13,59 +18,53 @@ def main():
 
     # Show boot message and wait 1 sec for DHT11 to be ready
     lcd.clear()
-    lcd.hal_backlight_on
+    lcd.backlight_on()
     lcd.putstr("Starting...")
     utime.sleep(1)
 
-    # Internal temperature sensor
-    internal_temp = machine.ADC(4)
-    conversion_factor = 3.3 / 65535
-
     # DHT 11
-    dht_sensor = DHT11(Pin(15, Pin.OUT, Pin.PULL_DOWN))
+    dht_sensor = DHT22(Pin(13, Pin.OUT, Pin.PULL_DOWN), dht11=True)
 
-    # Button
-    button = Pin(14, Pin.IN, Pin.PULL_DOWN)
-    button.irq(trigger=machine.Pin.IRQ_RISING, handler=switch_mode)
+    # Buttons
+    but_mode = Pin(14, Pin.IN, Pin.PULL_DOWN)
+    but_mode.irq(trigger=machine.Pin.IRQ_RISING, handler=switch_mode)
 
-    temp_min = dht_sensor.temperature
+    temp_min = 0
     temp_max = temp_min
-    hum_min = dht_sensor.humidity
+    hum_min = 0
     hum_max = hum_min
 
     while True:
-        temp1 = internal_temp.read_u16() * conversion_factor
-        temp1 = 27 - (temp1 - 0.706) / 0.001721
-    
-        t = dht_sensor.temperature
-        if t!=0:
-            temp2 = t
-        if temp2 < temp_min:
-            temp_min = temp2
-        if temp2 > temp_max:
-            temp_max = temp2
-            
-        h = dht_sensor.humidity
-        if h!=0:
-            hum = h
-        if hum < hum_min:
-            hum_min = hum
-        if hum > hum_max:
-            hum_max = hum
+        temp, hum = dht_sensor.read()
+        if temp is None:
+            print("DHT11 read error")
+        else:
+            if temp < temp_min or temp_min == 0:
+                temp_min = temp
+            if temp > temp_max or temp_max == 0:
+                temp_max = temp
+                
+            if hum < hum_min or hum_min == 0:
+                hum_min = hum
+            if hum > hum_max or hum_max == 0:
+                hum_max = hum
     
         if mode == 0:
-            display_data(lcd, temp1, temp2, hum)
+            display_data(lcd, temp, hum)
         else:
             display_min_max(lcd, temp_min, temp_max, hum_min, hum_max)
         utime.sleep(1)
     
-def display_data(lcd, temperature1, temperature2, humidity):
+def display_data(lcd, temperature,  humidity):
     lcd.clear()
-    lcd.putstr("T1=" + str(round(temperature1, 1))+"\nT2=" + str(round(temperature2, 1)) + " H=" + str(round(humidity, 1)))
+    lcd.putstr("Temperature " + str(temperature)+" C\nHumidity    " + str(humidity) + " %")
 
 def display_min_max(lcd, temp_min, temp_max, hum_min, hum_max):
     lcd.clear()
-    lcd.putstr("T "+str(temp_min)+" - "+str(temp_max)+"\nH "+str(hum_min)+" - "+str(hum_max))
+    lcd.putstr("Temp " + str(temp_min) + " - " + str(temp_max))
+    lcd.move_to(0, 1)
+    lcd.putstr("Hum  " + str(hum_min) + " - " + str(hum_max))
+
 
 def switch_mode(pin):
     global mode
