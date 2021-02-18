@@ -61,9 +61,9 @@ def display_data(lcd, temperature,  humidity):
 
 def display_min_max(lcd, temp_min, temp_max, hum_min, hum_max):
     lcd.clear()
-    lcd.putstr("Temp " + str(temp_min) + " - " + str(temp_max))
+    lcd.putstr("Temp " + str(temp_min) + " - " + str(temp_max) + " C")
     lcd.move_to(0, 1)
-    lcd.putstr("Hum  " + str(hum_min) + " - " + str(hum_max))
+    lcd.putstr("Hum  " + str(hum_min) + " - " + str(hum_max) + " %")
 
 
 def switch_mode(pin):
