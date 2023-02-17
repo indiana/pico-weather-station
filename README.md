@@ -18,4 +18,7 @@ Connections:
 
 ### Tact switch
 Connections:
-- Use switch to connect Pico's VBUS to GP14
+- Use 2 switches to connect Pico's VBUS to GP14 (mode switch) and GP15 (backlight switch)
+
+## My setup photo:
+![Setup photo](setup.jpg)
