@@ -9,6 +9,7 @@ from lib.esp8266_i2c_lcd import I2cLcd
 from lib.DHT22 import DHT22
 
 mode = 0
+light = True
 
 def main():
     # LCD
@@ -29,6 +30,9 @@ def main():
     # Buttons
     but_mode = Pin(14, Pin.IN, Pin.PULL_DOWN)
     but_mode.irq(trigger=Pin.IRQ_RISING, handler=switch_mode)
+    but_light = Pin(15, Pin.IN, Pin.PULL_DOWN)
+    but_light.irq(trigger=Pin.IRQ_RISING, handler=switch_light)
+    
 
     temp_min = 0
     temp_max = temp_min
@@ -67,6 +71,10 @@ def main():
             display_data(lcd, temp, hum, trend_str(temps_wma), trend_str(hums_wma))
         else:
             display_min_max(lcd, temp_min, temp_max, hum_min, hum_max)
+        if light:
+            lcd.backlight_on()
+        else:
+            lcd.backlight_off()
         utime.sleep(1)
     
 def display_data(lcd, temperature,  humidity, temp_trend, hum_trend):
@@ -86,6 +94,14 @@ def switch_mode(pin):
     global mode
     mode = (mode + 1) % 2
     print("Mode switched: " + str(mode))
+
+def switch_light(pin):
+    global light
+    light = not light
+    if light:
+        print("Light ON")
+    else:
+        print("Light OFF")
 
 def calc_wma(list):
     len_list = len(list)
